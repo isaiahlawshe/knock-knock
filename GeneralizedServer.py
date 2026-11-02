@@ -2,7 +2,7 @@ import socket
 import random
 import threading
 
-HOST = "0.0.0.0"
+HOST = "192.168.0.242"
 PORT = 2605
 
 jokes = []
@@ -48,14 +48,37 @@ def handle_client(conn, addr):
             conn.sendall(name.encode())
 
             reply = conn.recv(1024).decode().strip()
-            if reply != name + " who?":
-                conn.sendall(b"Protocol Violation")
-                return
 
-            conn.sendall(punchline.encode())
+            if name == "Banana":
+
+                while reply == "Banana who?":
+                    conn.sendall(b"Banana")
+                    reply = conn.recv(1024).decode().strip()
+
+                if reply == "Banana WHO!?":
+                    conn.sendall(b"Orange")
+
+                    reply = conn.recv(1024).decode().strip()
+
+                    if reply != "Orange who?":
+                        conn.sendall(b"Protocol Violation")
+                        return
+
+                    conn.sendall(b"Orange you glad I didn't say Banana")
+
+                else:
+                    conn.sendall(b"Protocol Violation")
+                    return
+
+            else:
+                if reply != name + " who?":
+                    conn.sendall(b"Protocol Violation")
+                    return
+
+                conn.sendall(punchline.encode())
 
         elif request == "TELL":
-            conn.sendall(b"Ok, tell me a joke.")
+            conn.sendall(b"\tOk, tell me a joke.")
 
             reply = conn.recv(1024).decode().strip()
             if reply != "Knock-Knock":
@@ -69,11 +92,10 @@ def handle_client(conn, addr):
                 conn.sendall(b"Protocol Violation")
                 return
 
-            with jokes_lock:
-                duplicate = any(joke[0] == name for joke in jokes)
+            duplicate = any(joke[0] == name for joke in jokes)
 
             if duplicate:
-                conn.sendall(b"I've heard that one already")
+                conn.sendall(b"\tI've heard that one already")
 
                 reply = conn.recv(1024).decode().strip()
                 if reply != "Ok, Sorry":
@@ -81,7 +103,7 @@ def handle_client(conn, addr):
 
                 return
 
-            conn.sendall((name + " who?").encode())
+            conn.sendall(("\t"+ name + " who?").encode())
 
             punchline = conn.recv(1024).decode().strip()
             if not punchline:
@@ -103,7 +125,7 @@ def handle_client(conn, addr):
                         )
 
             if duplicate:
-                conn.sendall(b"I've heard that one already")
+                conn.sendall(b"\tI've heard that one already")
                 return
 
     except (ConnectionError, OSError) as error:
